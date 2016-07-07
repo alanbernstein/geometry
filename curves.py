@@ -62,16 +62,86 @@ def naturalize_parameter(r, t=None):
     return ri, si, ti
 
 
+def pseudo_frenet_frame(r, t=None):
+    """compute pseudo-frenet frame for straight line.
+    pseudo-frenet frame is an entity that looks similar to a frenet frame,
+    but is well-defined for a straight line, thanks to an arbitrary but
+    consistent choice of binormal direction."""
+    # this depends on the arbitrary choice of a pseudo-binormal _B, which
+    # is set to the unit z vector here. This has benefits:
+    # - if line lies in x-y plane, then B = a_z (thus N in x-y plane)
+    # - if line does not lie in xy plane, then B is the vector "closest" to a_z in the
+    #   line's normal plane
+    # if T too close to a_z, then just choose _B = a_y
+    #
+    # TODO: expand this function to also work for curves, plus:
+    # - use (N, B) of the previous segment, for a line segment preceeded by a curve
+    # - do similar on other end of line segment
+    # - smoothly interpolate from (N_0, B_0) at start to (N_1, B_1) at end
+
+    _B = np.array([0, 0, 1])
+
+    dt = np.gradient(t)
+    dt3 = dt[:, None]
+    dr = np.gradient(r, axis=0)
+    v = dr / dt3
+    vmag = np.linalg.norm(v, axis=1)
+    T = v / vmag[:, None]
+    if T[0, 2] > 0.99:
+        # TODO: verify this works
+        _B = np.array([0, 1, 0])
+
+    Ndir = np.cross(_B, T)
+    N = Ndir / np.linalg.norm(Ndir, axis=1)
+    B = np.cross(T, N)
+
+    return T, N, B
+
+
+def frenet_frame_2D(r, t=None):
+    """compute frenet frame for curve r = [x y], parameterized by t
+    in two dimensions, N is simply defined as a_z x T, in the case
+    that it can not be determined from the change in T (straight line)"""
+
+    # deal with inputs
+    t = t or np.linspace(0, 1, len(r))  # (scalar)
+
+    # calculations
+    dt = np.gradient(t)
+    dt3 = dt[:, None]
+    dr = np.gradient(r, axis=0)
+    v = dr / dt3
+    vmag = np.linalg.norm(v, axis=1)
+    T = v / vmag[:, None]
+    dT = np.gradient(T, axis=0)
+    dTdt = dT / dt3
+    dTdtmag = np.linalg.norm(dTdt, axis=1)
+
+    # compute N
+    Nlist = []
+    last_N = None
+    for num, den, tan in zip(dTdt, dTdtmag, T):
+        if all(den != 0):
+            # best case: use proper definition of N
+            Nlist.append(num / den)
+            last_N = Nlist[-1]
+        elif last_N:
+            # use most recent N
+            Nlist.append(last_N)
+        else:
+            # if starting with a line segment, then use a_z cross T
+            Nlist.append([-tan[0], tan[1]])
+
+    N = np.vstack(Nlist).T
+
+    return T, N
+
+
 def frenet_frame(r, t=None):
     """compute frenet frame for curve r = [x y z], parameterized by t
     note: normal vector is undefined when curvature = 0
     source: thomas calculus e11 ch13
     """
-    # TODO: there should be a way to define a normal vector for a straight-line segment
-    #       unambiguously in many cases
-    #       - if line lies in xy plane, let B = z
-    #       - if line is preceded by a curved segment, N, B = N, b at end of curved segment
-    #       - isolated straight line in space is ambiguous
 
     # deal with inputs
     t = t or np.linspace(0, 1, len(r))  # (scalar)
