@@ -2,13 +2,29 @@
 import numpy as np
 
 
+def involute(r):
+    pass
+
+
+def evolute(r):
+    pass
+
+
+def radial(r):
+    pass
+
+
+def parallel_curve(r):
+    pass
+
+
 def add_frenet_offset_2D(base_curve, offset_vector, base_T=None, base_N=None):
     """apply 2D offset_vector using (T, N) of base_curve as the (x, y) plane"""
     # allow inputting T, N because they can be computed more accurately
     # in the caller if they are segments of a longer curve
 
     if base_T is None or base_N is None:
-        base_T, base_N, base_B = frenet_frame(base_curve)
+        base_T, base_N = frenet_frame_2D(base_curve)
 
     xy = []
     for b, d, t, n in zip(base_curve, offset_vector, base_T, base_N):
@@ -34,6 +50,7 @@ def add_frenet_offset(base_curve, offset_vector, base_T=None, base_N=None, base_
 
 
 def naturalize_parameter(r, t=None):
+    # TODO: use Curve class
     """given position vector r as a function of t
     return natural parameterization of curve ri
     that is, points of ri are equally spaced along the curve
@@ -62,8 +79,150 @@ def naturalize_parameter(r, t=None):
     return ri, si, ti
 
 
+def frenet_frame_2D_corrected (r):
+    c = Curve2D(r)
+    c.compute_normal_corrected()
+    return c.T, c.N_corrected
+
+
+class Curve2D(object):
+    def __init__(r, t=None):
+
+        # deal with inputs
+        self.t = t or np.linspace(0, 1, len(r))  # (scalar)
+
+        # calculations
+        self.dt = np.gradient(t)
+        self.dt3 = dt[:, None]
+        self.dr = np.gradient(self.r, axis=0)
+        self.v = self.dr / self.dt3
+        self.vmag = np.linalg.norm(self.v, axis=1)
+        self.T = self.v / self.vmag[:, None]
+        self.dT = np.gradient(self.T, axis=0)
+        self.dTdt = self.dT / self.dt3
+        self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)
+
+        self.N = self.dTdt / self.dTdtmag
+
+    def naive_normal(self):
+        self.compute_normal_naive()
+        return self.N_naive
+
+    def corrected_normal(self):
+        self.compute_corrected_normal()
+        return self.N_corrected
+
+    def compute_normal_naive(self):
+        """compute 2D frenet frame naively.
+        normal vector is simple 90 degree rotation of tangent vector"""
+        # this means the normal vector does not point into a curve, as expected
+
+        #self.T = self.dr / self.drmag[:, None]
+        self.N_naive = np.matrix([[0, 1], [-1, 0]]) * self.T
+
+    def compute_normal_corrected(self):
+        """compute frenet frame for a C1 curve r = [x y], parameterized by t.
+        N is defined for each value of t, in order of preference:
+        - analytical approximation: (dT/dt) / |dT/dt|
+        - most recent well-defined value (should work for C1 internal linear segment)
+        - a_z cross T (should work for linear segment at start of curve
+        """
+
+        # compute N corrected (assuming C1 curve)
+        Nlist = []
+        last_N = None
+        for N, den, tan in zip(self.N, self.dTdtmag, self.T):
+            if np.all(abs(den) > 0.00001):
+                # best case: use proper definition of N
+                Nlist.append(N)
+                last_N = Nlist[-1]
+            elif last_N:
+                # use most recent N
+                Nlist.append(last_N)
+            else:
+                # if starting with a line segment, then use a_z cross T
+                Nlist.append([-tan[1], tan[0]])
+
+        self.N_corrected = np.vstack(Nlist)
+
+
+def arc_length_approx(r):
+    """compute arc length of line segments of trajectory
+    might call this arc_length_first_order, """
+    c = Curve(r)
+    raise(NotImplementedError)
+    # TODO: implement this
+
+
+def curve_length(r, t=None):
+    # this is not defined in Curve because it's a constant, not a
+    # function of the parameter
+    c = Curve(r, t)
+    return np.trapz(c.vmag, c.t)
+    
+
+def arc_length(r, t=None):
+    """compute arc length assuming the trajectory
+    is sampled from a continuous curve"""
+    c = Curve(r, t)
+    return c.s
+
+
+def frenet_frame(r, t=None):
+    """compute frenet frame for curve r = [x y z], parameterized by t
+    note: normal vector is undefined when curvature = 0
+    """
+    c = Curve(r, t)
+    return c.tangent, c.normal, c.binormal
+
+class Curve(object):
+    """numeric representation of space curve
+    source: thomas calculus e11 ch13"""
+
+    def __init__(self, r=None, t=None):
+        # different init types:
+        # Curve(r) - define trajectory with uniform spacing in [0, 1]
+        # Curve(r, t)
+        # Curve(, tau, kappa) - define from torsion and curvature 
+        # TODO: split up into an input handle init, and multiple calculators
+        # below is the Curve(r) and Curve(r, t) version (linear basis)
+
+        # deal with inputs
+        self.r = r
+        self.t = t or np.linspace(0, 1, len(r))  # (scalar)
+
+        if r.shape[1] == 2:
+            # add third dimension (zeros)
+            self.r = np.hstack((r, np.zeros((len(r), 1))))  # (vector)
+
+        # calculations
+        # TODO: rename these properly, but then also make the nicknames work
+        self.dt = np.gradient(self.t)                         #          (scalar)
+        self.dt3 = self.dt[:, None]                           #          (conceptual scalar, numpy vector)
+        self.dr = np.gradient(self.r, axis=0)                 #          (vector)
+        self.v = self.dr / self.dt3                                # velocity (vector)
+        self.dv = np.gradient(self.v, axis=0)                 #          (vector)
+        self.a = self.dv / self.dt3                                # acceleration (vector)
+        self.vmag = np.linalg.norm(self.v, axis=1)            # speed    (scalar)
+        # TODO: use cumtrapz somehow
+        #self.s = np.cumsum(self.vmag * self.dt)                    # arclen   (scalar) 
+        self.T = self.v / self.vmag[:, None]                       # tangent  (vector)
+        self.dT = np.gradient(self.T, axis=0)                 #          (vector)
+        self.dTdt = self.dT / self.dt3                             #          (vector)
+        # TODO: fix warning?
+        self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)      #          (scalar)
+        self.N = self.dTdt / self.dTdtmag[:, None]                 # normal   (vector)
+        self.B = np.cross(self.T, self.N)                          # binormal (vector)
+        self.dB = np.gradient(self.B, axis=0)                 #          (vector)
+        self.k = self.dTdtmag / self.vmag                          # curvature (scalar)
+        self.dBdotN = np.sum(self.dB * self.N, axis=1)             #          (scalar)
+        self.tau = -self.dBdotN / self.vmag                        # torsion  (scalar)
+
+
+
 def pseudo_frenet_frame(r, t=None):
-    """compute pseudo-frenet frame for straight line.
+    # TODO: just define this in Curve class
+    """compute pseudo-frenet frame (still works for straight line segments)
     pseudo-frenet frame is an entity that looks similar to a frenet frame,
     but is well-defined for a straight line, thanks to an arbitrary but
     consistent choice of binormal direction."""
@@ -94,81 +253,6 @@ def pseudo_frenet_frame(r, t=None):
     Ndir = np.cross(_B, T)
     N = Ndir / np.linalg.norm(Ndir, axis=1)
     B = np.cross(T, N)
-
-    return T, N, B
-
-
-def frenet_frame_2D(r, t=None):
-    """compute frenet frame for curve r = [x y], parameterized by t
-    in two dimensions, N is simply defined as a_z x T, in the case
-    that it can not be determined from the change in T (straight line)"""
-
-    # deal with inputs
-    t = t or np.linspace(0, 1, len(r))  # (scalar)
-
-    # calculations
-    dt = np.gradient(t)
-    dt3 = dt[:, None]
-    dr = np.gradient(r, axis=0)
-    v = dr / dt3
-    vmag = np.linalg.norm(v, axis=1)
-    T = v / vmag[:, None]
-    dT = np.gradient(T, axis=0)
-    dTdt = dT / dt3
-    dTdtmag = np.linalg.norm(dTdt, axis=1)
-
-    # compute N
-    Nlist = []
-    last_N = None
-    for num, den, tan in zip(dTdt, dTdtmag, T):
-        if all(den != 0):
-            # best case: use proper definition of N
-            Nlist.append(num / den)
-            last_N = Nlist[-1]
-        elif last_N:
-            # use most recent N
-            Nlist.append(last_N)
-        else:
-            # if starting with a line segment, then use a_z cross T
-            Nlist.append([-tan[0], tan[1]])
-
-    N = np.vstack(Nlist).T
-
-    return T, N
-
-
-def frenet_frame(r, t=None):
-    """compute frenet frame for curve r = [x y z], parameterized by t
-    note: normal vector is undefined when curvature = 0
-    source: thomas calculus e11 ch13
-    """
-
-    # deal with inputs
-    t = t or np.linspace(0, 1, len(r))  # (scalar)
-
-    if r.shape[1] == 2:
-        # add third dimension (zeros)
-        r = np.hstack((r, np.zeros((len(r), 1))))  # (vector)
-
-    # calculations
-    dt = np.gradient(t)                         #          (scalar)
-    dt3 = dt[:, None]                           #          (conceptual scalar, numpy vector)
-    dr = np.gradient(r, axis=0)                 #          (vector)
-    v = dr / dt3                                # velocity (vector)
-    dv = np.gradient(v, axis=0)                 #          (vector)
-    a = dv / dt3                                # acceleration (vector)
-    vmag = np.linalg.norm(v, axis=1)            # speed    (scalar)
-    s = np.cumsum(vmag * dt)                    # arclen   (scalar)
-    T = v / vmag[:, None]                       # tangent  (vector)
-    dT = np.gradient(T, axis=0)                 #          (vector)
-    dTdt = dT / dt3                             #          (vector)
-    dTdtmag = np.linalg.norm(dTdt, axis=1)      #          (scalar)
-    N = dTdt / dTdtmag[:, None]                 # normal   (vector)
-    B = np.cross(T, N)                          # binormal (vector)
-    dB = np.gradient(B, axis=0)                 #          (vector)
-    k = dTdtmag / vmag                          # curvature (scalar)
-    dBdotN = np.sum(dB * N, axis=1)             #          (scalar)
-    tau = -dBdotN / vmag                        # torsion  (scalar)
 
     return T, N, B
 
