@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from curves import frenet_frame
+from curves import frenet_frame, frenet_frame_2D
 
 
 def archimedean_spiral(t):
@@ -13,10 +13,16 @@ def archimedean_spiral(t):
     return np.vstack((x, y)).T
 
 
-def frenet_example_2D():
+def line(t):
+    x = 0 + t
+    y = 1 - 0.5 * t
+    return np.vstack((x, y)).T
+
+
+def frenet_example_2D(curve_func):
     t = np.linspace(0, 2, 1201)
-    base = archimedean_spiral(t)
-    T, N, B = frenet_frame(base)
+    base = curve_func(t)
+    T, N = frenet_frame_2D(base)
 
     # plot curve and frenet frame at subsampled points
     fig = plt.figure()
@@ -29,8 +35,10 @@ def frenet_example_2D():
         plt.plot(txy[:, 0], txy[:, 1], 'r-')
         nxy = np.vstack((p, p + n0[0:2]))
         plt.plot(nxy[:, 0], nxy[:, 1], 'g-')
+    #plt.axis([0, 2, 0, 2])
     plt.show()
 
 
 if __name__ == '__main__':
-    frenet_example_2D()
+    #frenet_example_2D(line)
+    frenet_example_2D(archimedean_spiral)
