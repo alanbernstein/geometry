@@ -24,7 +24,7 @@ def add_frenet_offset_2D(base_curve, offset_vector, base_T=None, base_N=None):
     # in the caller if they are segments of a longer curve
 
     if base_T is None or base_N is None:
-        base_T, base_N = frenet_frame_2D(base_curve)
+        base_T, base_N = frenet_frame_2D_corrected(base_curve)
 
     xy = []
     for b, d, t, n in zip(base_curve, offset_vector, base_T, base_N):
@@ -79,21 +79,28 @@ def naturalize_parameter(r, t=None):
     return ri, si, ti
 
 
-def frenet_frame_2D_corrected (r):
+def frenet_frame_2D(r):
+    c = Curve2D(r)
+    return c.T, c.N
+
+
+def frenet_frame_2D_corrected(r):
     c = Curve2D(r)
     c.compute_normal_corrected()
     return c.T, c.N_corrected
 
 
 class Curve2D(object):
-    def __init__(r, t=None):
+    eps = .00001
 
+    def __init__(self, r, t=None):
         # deal with inputs
-        self.t = t or np.linspace(0, 1, len(r))  # (scalar)
+        self.t = t if t is not None else np.linspace(0, 1, len(r))  # (scalar)
+        self.r = r
 
         # calculations
-        self.dt = np.gradient(t)
-        self.dt3 = dt[:, None]
+        self.dt = np.gradient(self.t)
+        self.dt3 = self.dt[:, None]
         self.dr = np.gradient(self.r, axis=0)
         self.v = self.dr / self.dt3
         self.vmag = np.linalg.norm(self.v, axis=1)
@@ -101,8 +108,7 @@ class Curve2D(object):
         self.dT = np.gradient(self.T, axis=0)
         self.dTdt = self.dT / self.dt3
         self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)
-
-        self.N = self.dTdt / self.dTdtmag
+        self.N = self.dTdt / self.dTdtmag[:, None]
 
     def naive_normal(self):
         self.compute_normal_naive()
@@ -132,11 +138,11 @@ class Curve2D(object):
         Nlist = []
         last_N = None
         for N, den, tan in zip(self.N, self.dTdtmag, self.T):
-            if np.all(abs(den) > 0.00001):
+            if np.all(abs(den) > self.eps):
                 # best case: use proper definition of N
                 Nlist.append(N)
                 last_N = Nlist[-1]
-            elif last_N:
+            elif last_N is not None:
                 # use most recent N
                 Nlist.append(last_N)
             else:
@@ -210,6 +216,7 @@ class Curve(object):
         self.dT = np.gradient(self.T, axis=0)                 #          (vector)
         self.dTdt = self.dT / self.dt3                             #          (vector)
         # TODO: fix warning?
+        # import ipdb; ipdb.set_trace()
         self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)      #          (scalar)
         self.N = self.dTdt / self.dTdtmag[:, None]                 # normal   (vector)
         self.B = np.cross(self.T, self.N)                          # binormal (vector)
