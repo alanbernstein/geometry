@@ -14,7 +14,8 @@ def radial(r):
     pass
 
 
-def parallel_curve(r):
+def offset_curve(r):
+    # aka parallel curve
     pass
 
 
