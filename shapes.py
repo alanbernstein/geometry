@@ -7,10 +7,19 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    c = heart_curve_square_180()
     fig = plt.figure()
     fig.add_subplot(111, aspect='equal')
-    qplot(c, 'r-')
+    for d in np.linspace(180, 225, 6):
+        print(d)
+        c = heart_curve_square(arc_degrees=d)
+        plt.plot(c[:, 0], c[:, 1])
+    plt.show(block=False)
+
+    c = heart_curve_square_180()
+    plt.plot(c[:, 0], c[:, 1], 'k--')
+    c = heart_curve_square_225()
+    plt.plot(c[:, 0], c[:, 1], 'k--')
+
     debug()
 
 
@@ -22,11 +31,29 @@ def heart_curve_pointy(num_points=100):
 
 
 def heart_curve_square(num_points=100, arc_degrees=180):
-    t = np.linspace(0, arc_degrees / 180 * np.pi, num_points + 1)
-    x0 = np.cos(t - np.pi / 4) + 1
-    y0 = np.sin(t - np.pi / 4)
+    """arc_degrees = angular length of one curved part of heart, in [180, 225]"""
+    t = np.linspace(0, float(arc_degrees) / 180 * np.pi, num_points + 1)
+
+    x_arc = np.cos(t - np.pi / 4)
+    y_arc = np.sin(t - np.pi / 4)
+    x_offset = -x_arc[-1]
+    y_offset = 0
+    y_bottom = -x_arc[0] + y_arc[0] + x_arc[-1]
+
+    x0 = x_arc + x_offset
+    y0 = y_arc + y_offset
+    x1 = -x_arc[::-1] - x_offset
+    y1 = y_arc[::-1] + y_offset
+    x2 = [0, x0[0]]
+    y2 = [y_bottom, y0[0]]
+
+    x = np.hstack((x0, x1, x2))
+    y = np.hstack((y0, y1, y2))
+
+    return np.vstack((x, y)).T
 
 
+# almost deprecated, but the new one doesnt quite match yet
 r2 = np.sqrt(2)
 def heart_curve_square_225(num_points=100):
     t = np.linspace(0, 1.25 * np.pi, num_points + 1)
@@ -47,11 +74,11 @@ def heart_curve_square_180(num_points=100):
     t = np.linspace(0, np.pi, num_points + 1)
 
     x0 = np.cos(t - np.pi / 4) + np.sqrt(2) / 2
-    y0 = np.sin(t - np.pi / 4) + np.sqrt(2) / 2
+    y0 = np.sin(t - np.pi / 4)
     x1 = np.cos(t + np.pi / 4) - np.sqrt(2) / 2
-    y1 = np.sin(t + np.pi / 4) + np.sqrt(2) / 2
+    y1 = np.sin(t + np.pi / 4)
     x2 = [0, r2]
-    y2 = [-r2, 0]
+    y2 = [-r2 - np.sqrt(2) / 2, -np.sqrt(2) / 2]
 
     x = np.hstack((x0, x1, x2))
     y = np.hstack((y0, y1, y2))
