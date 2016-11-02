@@ -7,7 +7,7 @@
 
 ## curves.py
 - `frenet_frame` - compute frenet frame (and other related functions) for a space curve
-- `add_frenet_offset` - generate a curve C by applying a variable offset vector F to a space curve S, using the frenet basis (T, N, N) as the x-y-z space for F
+- `add_frenet_offset` - generate a curve C by applying a variable offset vector F to a space curve S, using the frenet basis (T, N, B) as the x-y-z space for F
 - `add_frenet_offset_2D` - similar to add_frenet_offset, but accepts 2D vector function F
 - `naturalize_parameter` - generate a curve C following the same path as curve S, but equally-spaced with respect to the parameter
 - `frenet_frame_difference` - deprecated old version of frenet_frame
