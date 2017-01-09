@@ -23,6 +23,33 @@ def main():
     debug()
 
 
+def square(c=0, s=1):
+    return np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+
+
+# cc = np.exp(np.linspace(0, 2j*np.pi, 65))
+# circle = np.vstack((cc.real, cc.imag)).T
+def arc(c=0, r=1, a1=0, a2=2*np.pi):
+    # center, radius angle1, angle2
+    # defaults -> unit circle
+
+    # TODO: this is super clunky, there must be a better way?
+    if type(c) == np.ndarray:
+        if c.shape == (2,):
+            c = c[0] + c[1]*1j
+        elif c.shape == (1, 2):
+            c = c[:, 0] + c[:, 1]*1j
+        else:
+            debug()
+
+    cc = c + r * np.exp(1j * np.linspace(a1, a2, 65))
+    return np.vstack((cc.real, cc.imag)).T
+
+
+def circle(c=0, r=1):
+    return arc(c, r)
+
+
 def heart_curve_pointy(num_points=100):
     t = np.linspace(0, 2 * np.pi, num_points + 1)
     x = np.sin(t) ** 3
