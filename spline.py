@@ -11,11 +11,12 @@ def bernstein_poly(i, n, t):
 
 
 # TODO: cache polynomial for fixed nt
-# TODO: extend tp N dimensions
+# TODO: extend to N dimensions
 # TODO: evaluate via subdivision rather than linear
 # TODO: support multiple orders - not clear how that works with slope_controlled
 def bezier_curve(knots, nt=1000):
     """Return bezier curve corresponding to given control points
+    curve = bezier_curve(knots, nt)
     knots: list of [x, y]
     nt: number of time steps
     return value: (nt+1)x2 array
