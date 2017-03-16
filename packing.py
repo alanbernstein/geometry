@@ -13,6 +13,8 @@ from shapes import arc, square
 from panda.debug import debug, jprint, pp, pm
 
 
+# try using something like http://cimar.mae.ufl.edu/CIMAR/pages/thesis/Pasha_A_CISE.pdf
+
 @pm
 def main():
     # umbel_logo()
@@ -87,12 +89,16 @@ class ShapePacker(object):
         return c
 
     def pack_shape(self, *args, **kwargs):
-        return self.pack_shape_scale_binary(*args, **kwargs)
+        return self.pack_shape_scale(*args, **kwargs)
 
-    def pack_shape_scale_position_binary(self, plot=False):
+    def pack_shape_scale_position_rotation(self, plot=False):
+        # 
         pass
 
-    def pack_shape_scale_binary(self, plot=False):
+    def pack_shape_scale_position(self, plot=False):
+        pass
+
+    def pack_shape_scale(self, plot=False):
         # TODO: select one of the base_shapes randomly
         # TODO: use bounding circle for first pass
         #       https://www.nayuki.io/res/smallest-enclosing-circle/smallestenclosingcircle.py
