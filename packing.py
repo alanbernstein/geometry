@@ -9,15 +9,67 @@ from shapely.geometry import Point, Polygon, MultiPolygon
 from descartes.patch import PolygonPatch
 
 from umbel import umbel_logo
+from logos import pilosa_logo
 from shapes import arc, square
 from panda.debug import debug, jprint, pp, pm
+from svgpathtools import svg2paths
 
+from svglib.svglib import svg2rlg
 
 # try using something like http://cimar.mae.ufl.edu/CIMAR/pages/thesis/Pasha_A_CISE.pdf
+https://github.com/Jack000/SVGnest
+
+def read_svg(img_fname, dt=1/100.):
+    # read SVG line drawing from file
+    # return a list of paths, each of which is a list of complex numbers x+iy
+    # also return a list of list of segments, each a list of complex numbers
+    # [[[c0, c1, c2, ...], [...], ...], ...]
+    #   segment
+    #  path
+    # paths
+    paths, attributes = svg2paths(img_fname)
+    pths = []
+    paths_seg = []
+    for n, path in enumerate(paths):
+        print(n, len(path))
+        pth = []
+        pth_segs = []
+        for segment in path:
+            # print(segment, segment.point(0), segment.point(1))
+            seg = []
+            for t in np.arange(0, 1, dt):
+                pth.append(complex(segment.point(t)))
+                seg.append(complex(segment.point(t)))
+            pth_segs.append(seg)
+        paths_seg.append(pth_segs)
+        pths.append(pth)
+    return pths, paths_seg
+
 
 @pm
 def main():
-    # umbel_logo()
+    # umbel = umbel_logo()
+
+    poop_pths, poop_segs = read_svg('poop-emoji.svg', dt=1/20)
+    poop_pths[0] = poop_pths[0][0:560]
+
+    poop_paths = []
+    for pth in poop_pths:
+        x = [k.real for k in pth]
+        y = [-k.imag for k in pth]
+        path = np.vstack((x, y)).T
+        poop_paths.append(path)
+
+    """
+    plt.figure()
+    for pth in poop_pths:
+        x = [k.real for k in pth]
+        y = [-k.imag for k in pth]
+        plt.plot(x, y)
+    plt.axis('equal')
+    plt.show()
+    debug()
+    """
 
     dim = np.array([6, 4])
 
@@ -31,19 +83,23 @@ def main():
     plt.get_current_fig_manager().window.raise_()
 
     # sp = ShapePacker(dim, [arc()])
-    sp = ShapePacker(dim, [umbel_logo()])
+    # sp = ShapePacker(dim, [umbel_logo()])
+    sp = ShapePacker(dim, [poop_paths])
     sp.pack(100, ax)
 
 
 class ShapePacker(object):
-    def __init__(self, dim=None, base_shapes=None):
+    def __init__(self, dim=None, base_shapes=None, boundaries=None):
         if dim is None:
             dim = np.array([6, 4])
         self.dim = dim
 
         if base_shapes is None:
             base_shapes = [arc()]
+        if boundaries is None:
+            boundaries = [x for x in base_shapes]
         self.base_shapes = base_shapes
+        self.boundaries = boundaries
 
         border_int = square() * dim
         border_ext = square() * (dim + 1) - [0.5, 0.5]
@@ -58,6 +114,7 @@ class ShapePacker(object):
         if ax:
             self.plot_border()
         for n in range(count):
+            print(n)
             self.pack_shape()
             if ax:
                 plot_polys(self.shapes[-1:], ax)
@@ -71,7 +128,7 @@ class ShapePacker(object):
         # get point inside
         return np.random.random((1, 2)) * self.dim
 
-    def random_point(self):
+    def random_point(self, use_boundaries=True):
         # get point inside interior and not inside another poly
         count = 0
         while True:
