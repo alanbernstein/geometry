@@ -14,9 +14,14 @@ def radial(r):
     pass
 
 
-def offset_curve(r):
+def offset_curve_naive(r, d=1):
     # aka parallel curve
-    pass
+    # naive because will only work for curves without inflection points
+    rr = Curve2D(r)
+    return rr.r + d * rr.N
+
+
+offset_curve = offset_curve_naive
 
 
 def add_frenet_offset_2D(base_curve, offset_vector, base_T=None, base_N=None):
@@ -180,7 +185,8 @@ def frenet_frame(r, t=None):
     note: normal vector is undefined when curvature = 0
     """
     c = Curve(r, t)
-    return c.tangent, c.normal, c.binormal
+    return c.T, c.N, c.B
+
 
 class Curve(object):
     """numeric representation of space curve
@@ -190,7 +196,7 @@ class Curve(object):
         # different init types:
         # Curve(r) - define trajectory with uniform spacing in [0, 1]
         # Curve(r, t)
-        # Curve(, tau, kappa) - define from torsion and curvature 
+        # Curve(, tau, kappa) - define from torsion and curvature
         # TODO: split up into an input handle init, and multiple calculators
         # below is the Curve(r) and Curve(r, t) version (linear basis)
 
@@ -204,27 +210,27 @@ class Curve(object):
 
         # calculations
         # TODO: rename these properly, but then also make the nicknames work
-        self.dt = np.gradient(self.t)                         #          (scalar)
-        self.dt3 = self.dt[:, None]                           #          (conceptual scalar, numpy vector)
-        self.dr = np.gradient(self.r, axis=0)                 #          (vector)
-        self.v = self.dr / self.dt3                                # velocity (vector)
-        self.dv = np.gradient(self.v, axis=0)                 #          (vector)
-        self.a = self.dv / self.dt3                                # acceleration (vector)
+        self.dt = np.gradient(self.t)                         # (scalar)
+        self.dt3 = self.dt[:, None]                           # (conceptual scalar, numpy vector)
+        self.dr = np.gradient(self.r, axis=0)                 # (vector)
+        self.v = self.dr / self.dt3                           # velocity (vector)
+        self.dv = np.gradient(self.v, axis=0)                 # (vector)
+        self.a = self.dv / self.dt3                           # acceleration (vector)
         self.vmag = np.linalg.norm(self.v, axis=1)            # speed    (scalar)
         # TODO: use cumtrapz somehow
-        #self.s = np.cumsum(self.vmag * self.dt)                    # arclen   (scalar) 
-        self.T = self.v / self.vmag[:, None]                       # tangent  (vector)
-        self.dT = np.gradient(self.T, axis=0)                 #          (vector)
-        self.dTdt = self.dT / self.dt3                             #          (vector)
+        # self.s = np.cumsum(self.vmag * self.dt)             # arclen   (scalar)
+        self.T = self.v / self.vmag[:, None]                  # tangent  (vector)
+        self.dT = np.gradient(self.T, axis=0)                 # (vector)
+        self.dTdt = self.dT / self.dt3                        # (vector)
         # TODO: fix warning?
         # import ipdb; ipdb.set_trace()
-        self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)      #          (scalar)
-        self.N = self.dTdt / self.dTdtmag[:, None]                 # normal   (vector)
-        self.B = np.cross(self.T, self.N)                          # binormal (vector)
-        self.dB = np.gradient(self.B, axis=0)                 #          (vector)
-        self.k = self.dTdtmag / self.vmag                          # curvature (scalar)
-        self.dBdotN = np.sum(self.dB * self.N, axis=1)             #          (scalar)
-        self.tau = -self.dBdotN / self.vmag                        # torsion  (scalar)
+        self.dTdtmag = np.linalg.norm(self.dTdt, axis=1)      # (scalar)
+        self.N = self.dTdt / self.dTdtmag[:, None]            # normal   (vector)
+        self.B = np.cross(self.T, self.N)                     # binormal (vector)
+        self.dB = np.gradient(self.B, axis=0)                 # (vector)
+        self.k = self.dTdtmag / self.vmag                     # curvature (scalar)
+        self.dBdotN = np.sum(self.dB * self.N, axis=1)        # (scalar)
+        self.tau = -self.dBdotN / self.vmag                   # torsion  (scalar)
 
 
 
