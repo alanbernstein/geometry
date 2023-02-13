@@ -398,7 +398,7 @@ def animate_truncated_icosahedron():
         nearest_idxs_1.append(np.argmin(np.linalg.norm(v-v1, axis=1)))
         nearest_idxs_3.append(np.argmin(np.linalg.norm(v-v3, axis=1)))
 
-    if True:
+    if False:
         # single test frame - truncated icosahedron -> dodecahedron
         S = 1
         v4 = []
@@ -421,9 +421,9 @@ def animate_truncated_icosahedron():
         plt.show()
         return
 
-    if True:
+    if False:
         # single test frame - truncated icosahedron -> icosahedron
-        S = 0
+        S = 1
         v4 = []
         for va, ib in zip(v2, nearest_idxs_1):
             vb = v1[ib]
@@ -444,9 +444,10 @@ def animate_truncated_icosahedron():
         return
 
     # loop over frame index
-    t_vec = np.linspace(0, 2*np.pi, 60)
-    Smin, Smax = -.5, 1
-    S = -.5  # parameter to control adjustment toward/away nearest v1 vertex
+    t_vec = np.linspace(0, 2*np.pi, 12+1)
+    # Smin, Smax = -.5, 1
+    Smin, Smax = 0, 1
+    # S = -.5  # parameter to control adjustment toward/away nearest v1 vertex
     for n, t in enumerate(t_vec):
         S = (Smax-Smin)*(np.sin(t)+1)/2 + Smin
         v4 = []
@@ -464,9 +465,9 @@ def animate_truncated_icosahedron():
         ax.set_zlim3d([-4, 4])
         plt.axis('off')
         # plt.savefig('frames/trunc-anim-%02d.png' % n, bbox_inches='tight')
-        plt.savefig('frames/trunc-anim-%02d.png' % n)
+        plt.savefig('frames2/trunc-anim-%02d.png' % n)
         plt.close()
-        print(n)
+        print(n, t)
 
     # plt.show()
 

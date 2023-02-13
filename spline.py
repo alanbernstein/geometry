@@ -1,8 +1,41 @@
 #!/usr/bin/python
-from scipy.misc import comb
+from scipy.special import comb
 import numpy as np
 
 # http://stackoverflow.com/a/12644499/137838
+
+
+def demo():
+    import matplotlib.pyplot as plt
+    knots = np.array([
+        [0, 0, 0.5, 0],
+        [1, 0, 0, 0.5],
+        [1, 1, -0.5, 0],
+        [0, 1, 0, -0.5],
+        [0, 0, 0.5, 0],
+    ])
+    k = 0.125
+    knots = np.array([
+        [0, 0, k, k],
+        [.5, .5, k, k],
+        [.5, 1, -k, k],
+        [0, 1, -k, -k],
+        [0, 1, 0, 0],
+        [0, 1, -k, k],
+        [-.5, 1, -k, -k],
+        [-.5, .5, k, -k],
+        [0, 0, k, -k],
+    ])
+
+    path = slope_controlled_bezier_curve(knots)
+    plt.figure()
+    plt.axis('equal')
+    plt.plot(path[:,0], path[:,1], 'k-')
+    ak = {'head_width': 0.025, 'head_length': 0.05}
+    for (x, y, mx, my) in knots:
+        plt.plot(x, y, 'k.')
+        plt.arrow(x, y, mx, my, color='k', **ak)
+    plt.show()
 
 
 def bernstein_poly(i, n, t):
@@ -59,3 +92,7 @@ def slope_controlled_bezier_curve(knots, pts_per_segment=50):
 
     # combine segments
     return np.vstack(xy)
+
+
+if __name__ == '__main__':
+    demo()
