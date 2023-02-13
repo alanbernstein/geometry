@@ -11,13 +11,13 @@ from descartes.patch import PolygonPatch
 from umbel import umbel_logo
 from logos import pilosa_logo
 from shapes import arc, square
-from panda.debug import debug, jprint, pp, pm
+from ipdb import iex, set_trace as db
 from svgpathtools import svg2paths
 
 from svglib.svglib import svg2rlg
 
 # try using something like http://cimar.mae.ufl.edu/CIMAR/pages/thesis/Pasha_A_CISE.pdf
-https://github.com/Jack000/SVGnest
+# https://github.com/Jack000/SVGnest
 
 def read_svg(img_fname, dt=1/100.):
     # read SVG line drawing from file
@@ -46,7 +46,7 @@ def read_svg(img_fname, dt=1/100.):
     return pths, paths_seg
 
 
-@pm
+@iex
 def main():
     # umbel = umbel_logo()
 
@@ -68,7 +68,7 @@ def main():
         plt.plot(x, y)
     plt.axis('equal')
     plt.show()
-    debug()
+    db()
     """
 
     dim = np.array([6, 4])
@@ -122,7 +122,7 @@ class ShapePacker(object):
                 # plt.pause(.1)
 
         plt.show()
-        debug()
+        db()
 
     def random_interior_point(self):
         # get point inside

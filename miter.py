@@ -5,10 +5,10 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpltools import equal_box
 from geometry.polyhedra import select_shortest_edges, cube
 from geometry.plane import Plane
-from debug import pm, debug
+from ipdb import iex, set_trace as debug
 
 
-@pm
+@iex
 def main():
     miter_45_45()
 

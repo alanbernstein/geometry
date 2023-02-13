@@ -152,6 +152,11 @@ def h1(alpha_degrees, beta_degrees):
     return path
 
 
+def h1thick(alpha_degrees, beta_degrees, width=0.125):
+    # TODO
+    pass
+
+
 
     
 # https://mathworld.wolfram.com/HeartCurve.html

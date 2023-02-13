@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import mpl_toolkits.mplot3d as a3
 import matplotlib.colors as colors
 
-from panda.debug import debug, pm
+from ipdb import iex, set_trace as db
 
 # coordinate definitions
 
@@ -559,7 +559,7 @@ def test_solid_angle():
         print(n, poly_func.__name__, sum(angles))
 
 
-@pm
+@iex
 def main():
     # test_plot_wireframe()
     # test_plot_solid()
