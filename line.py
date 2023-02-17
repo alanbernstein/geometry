@@ -40,7 +40,7 @@ class Line(object):
     def _init_point_angle(self, **kwargs):
         p1 = kwargs['p1']
         angle = np.array(kwargs['angle'])
-        p2 = np.array(kwargs['p1']) + [np.cos(angle), np.sin(angle)]
+        p2 = np.array(p1) + [np.cos(angle), np.sin(angle)]
         self._init_point_point(p1=p1, p2=p2)
 
     def _init_point_point(self, **kwargs):

@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    old_undocumented_demo()
-    # new_hot_demo()
+    # old_undocumented_demo()
+    new_hot_demo()
 
 
 def new_hot_demo():
     fig = plt.figure()
     fig.add_subplot(111, aspect='equal')
 
-    ds = np.linspace(180, 255, 6)
+    # ds = np.linspace(180, 255, 6)
     # ds = [180, 198]
-    # ds = np.linspace(180, 198, 6)
+    ds = np.linspace(180, 198, 6)
     # ds = [183]
 
     for d in ds:
