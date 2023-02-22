@@ -15,11 +15,11 @@ dpi = 80
 
 @iex
 def demo():
-    demo_overview_grid()
+    # demo_overview_grid()
     #demo_overlaid()
     # demo_parameter_scale()
 
-    #h_construct(100, 45)
+    h_construct(100, 45)
     #h_analytical(100, 45)
 
     #demo_equal_vertex_angles()
@@ -132,6 +132,20 @@ def h_analytical(a_degrees=90, b_degrees=84):
     return path
 
 
+def plot_angle(x, y, a0, a1, r, label, color):
+    a0, a1 = min(a0, a1), max(a0, a1)
+
+    N = 256
+    Na = int(N*(a1-a0)/(2*np.pi))
+    a = np.linspace(a0, a1, Na)
+    c = x+1j*y + r*np.exp(1j*a)
+    plt.plot(c.real, c.imag, color+'-')
+
+    al = (a0+a1)/2  # TODO short-average
+    xyl = x+1j*y + 1.25*r*np.exp(1j*al)
+    plt.text(xyl.real, xyl.imag, label, color=color)
+
+
 def h_construct(alpha_degrees=90, beta_degrees=84):
     # type: custom-parametric
     # description: heart with two circular-arc lobes,
@@ -193,59 +207,74 @@ def h_construct(alpha_degrees=90, beta_degrees=84):
         ak = {'head_width': 0.025, 'head_length': 0.05}
         lk = {'linewidth': 1, 'linestyle': '--'}
 
-        for stage in range(7, 8):
+        for step in range(0, 9):
             plt.figure(figsize=figsize, dpi=dpi)
-            if stage >= 0:
+            if step >= 0:
                 plt.title('Inputs')
                 plt.plot(0, 0, 'ro')
                 plt.plot(0, 1, 'bo')
                 plt.arrow(0, 0, np.cos(a)/4, np.sin(a)/4, color='r', **ak)
                 plt.arrow(0, 1, np.cos(b)/4, np.sin(b)/4, color='b', **ak)
 
-            if stage >= 1:
+            if step >= 1:
+                plt.title('Angle details')
+                plt.plot(0, 0, 'ro')
+                plt.arrow(0, 0, np.cos(a)/4, np.sin(a)/4, color='r', **ak)
+                plt.arrow(0, 0, np.cos(np.pi-a)/4, np.sin(np.pi-a)/4, color='r', **ak)
+                plt.plot([0, 1/4], [0, 0], 'k', **lk)
+                plot_angle(0, 0, 0, a, 1/8, 'a', 'r')
+                plot_angle(0, 0, a, np.pi-a, 1/9, 'α', 'r')
+
+                plt.plot(0, 1, 'bo')
+                plt.arrow(0, 1, np.cos(b)/4, np.sin(b)/4, color='b', **ak)
+                plt.arrow(0, 1, np.cos(np.pi-b)/4, np.sin(np.pi-b)/4, color='b', **ak)
+                plt.plot([0, 1/4], [1, 1], 'k', **lk)
+                plot_angle(0, 1, 0, b, 1/8, 'b', 'b')
+                plot_angle(0, 1, b, np.pi-b, 1/9, 'β', 'b')
+
+            if step >= 2:
                 plt.title('Extend lines, find intersection')
                 plt.plot([0, i1[0]], [0, i1[1]], 'r--', **lk)
                 plt.plot([0, -i1[0]], [0, -i1[1]], 'r--', **lk)
                 plt.plot([0, i1[0]], [1, i1[1]], 'b--', **lk)
                 plt.plot(i1[0], i1[1], 'm.')
 
-            if stage >= 2:
+            if step >= 3:
                 plt.title('Angle bisector')
                 plt.arrow(i1[0], i1[1], np.cos(c)/4, np.sin(c)/4, color='m', **ak)
                 plt.plot([i1[0], i2[0]], [i1[1], i2[1]], 'm--', **lk)
 
-            if stage >= 3:
+            if step >= 4:
                 plt.title('Circle center')
                 plt.arrow(0, 1, np.cos(b-np.pi/2)/4, np.sin(b-np.pi/2)/4, color='g', **ak)
                 plt.plot([0, i2[0]], [1, i2[1]], 'g--', **lk)
                 plt.plot(i2[0], i2[1], 'k.')
 
-            if stage >= 4:
+            if step >= 5:
                 plt.title('Auxiliary circle')
                 plt.plot(i2[0]+r*cc.real, i2[1]+r*cc.imag, 'gray', **lk)
 
-            if stage >= 5:
+            if step >= 6:
                 plt.title('Lower radius')
                 plt.plot(i3[0], i3[1], 'c.')
                 plt.plot([i2[0], i3[0]], [i2[1], i3[1]], 'c', **lk)
                 plt.arrow(i2[0], i2[1], np.cos(a-np.pi/2)/4, np.sin(a-np.pi/2)/4, color='c', **ak)
 
-            if stage >= 6:
+            if step >= 7:
                 plt.title('Reflect circle')
                 plt.plot(-i2[0], i2[1], 'k.')
                 plt.plot(-i2[0]+r*cc.real, i2[1]+r*cc.imag, 'gray', **lk)
                 plt.plot(-i3[0], i3[1], 'c.')
 
-            if stage >= 7:
+            if step >= 8:
                 plt.title('Connect the two arcs and two lines')
                 plt.plot(path.real, path.imag, 'k-')
 
-                
 
             plt.axis('equal')
             plt.grid('off')
             plt.axis('off')
-            #plt.savefig('heart-stage-%d.png' % stage)
+            plt.savefig('heart-step-%d.png' % step)
 
         #plt.figure(figsize=figsize, dpi=dpi)
         #plt.title('Final shape')
